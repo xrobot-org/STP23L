@@ -51,7 +51,7 @@ class STP23L : public LibXR::Application {
          const char* topic_name, size_t task_stack_depth,
          const char* uart_name = "uart5", uint32_t frame_timeout_ms = 200)
       : frame_timeout_ms_(frame_timeout_ms),
-        topic_(topic_name, sizeof(frame_)),
+        topic_(LibXR::Topic::CreateTopic<Frame>(topic_name)),
         uart_(hw.template FindOrExit<LibXR::UART>({uart_name})),
         cmd_file_(LibXR::RamFS::CreateCommand("stp23l", CommandFunc, this)) {
     app.Register(*this);
