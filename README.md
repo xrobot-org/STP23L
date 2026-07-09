@@ -1,28 +1,44 @@
 # STP23L
 
-STP23L 测距模块的 LibXR 封装，采用与 `xrobot-org/BMI088` 一致的模块结构：
+LDROBOT STP-23L UART laser ranging sensor module for XRobot.
 
-- 后台线程读取 UART 字节流
-- 用固定帧头和校验和解析完整一帧点云数据
-- 发布完整 `STP23L::Frame` Topic
-- 在 `ramfs/bin/stp23l` 提供状态命令
+This module reads the STP-23L UART byte stream in a background thread, syncs on
+the fixed frame header, verifies checksum, publishes complete 12-point ranging
+frames, and exposes a RamFS shell command for status output.
+
+The UART name is a constructor argument, so projects may use other hardware
+aliases if needed.
 
 ## Required Hardware
 
-- `uart5` 或等价别名
+- `stp23l_uart`
 - `ramfs`
 
 ## Constructor Arguments
 
-- `topic_name`
-- `task_stack_depth`
-- `uart_name`
-- `frame_timeout_ms`
+- `topic_name`: default `"stp23l_frame"`
+- `task_stack_depth`: default `2048`
+- `uart_name`: default `"stp23l_uart"`
+- `frame_timeout_ms`: default `200`
 
-## Published Topic
+## Published Topics
 
-`topic_name` 的 payload 为 `STP23L::Frame`，包含：
-- 12 个点的原始距离/噪声/强度/置信度/积分次数
-- 传感器时间戳
-- 平均距离、最小距离、最大距离
-- 有效点数量
+- `topic_name`: `STP23L::Frame`, including 12 raw points, sensor timestamp, average distance, min / max distance, and valid point count
+
+## Shell Commands
+
+The module registers `bin/stp23l` in `RamFS`.
+
+- `bin/stp23l` or `bin/stp23l status`: print frame counters and latest distance statistics
+
+## XRobot Configuration Example
+
+```yaml
+- id: rangefinder
+  name: STP23L
+  constructor_args:
+    topic_name: "stp23l_frame"
+    task_stack_depth: 2048
+    uart_name: "stp23l_uart"
+    frame_timeout_ms: 200
+```

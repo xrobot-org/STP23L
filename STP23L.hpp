@@ -2,14 +2,14 @@
 
 // clang-format off
 /* === MODULE MANIFEST V2 ===
-module_description: STP23L UART ranging sensor driver with full-frame publish and shell status command
+module_description: XRobot Module for LDROBOT STP-23L laser ranging sensor
 constructor_args:
   - topic_name: "stp23l_frame"
   - task_stack_depth: 2048
-  - uart_name: "uart5"
+  - uart_name: "stp23l_uart"
   - frame_timeout_ms: 200
 template_args: []
-required_hardware: uart5/UART5 ramfs
+required_hardware: stp23l_uart ramfs
 depends: []
 === END MANIFEST === */
 // clang-format on
@@ -49,7 +49,7 @@ class STP23L : public LibXR::Application {
 
   STP23L(LibXR::HardwareContainer& hw, LibXR::ApplicationManager& app,
          const char* topic_name, size_t task_stack_depth,
-         const char* uart_name = "uart5", uint32_t frame_timeout_ms = 200)
+         const char* uart_name = "stp23l_uart", uint32_t frame_timeout_ms = 200)
       : frame_timeout_ms_(frame_timeout_ms),
         topic_(LibXR::Topic::CreateTopic<Frame>(topic_name)),
         uart_(hw.template FindOrExit<LibXR::UART>({uart_name})),
