@@ -43,14 +43,18 @@ class STP23L
   };
 #pragma pack(pop)
 
-  STP23L(LibXR::UART& external_uart_name, LibXR::RamFS& external_ramfs,
-         const char* topic_name, size_t task_stack_depth, uint32_t frame_timeout_ms = 200)
+  STP23L(
+      LibXR::UART& uart,
+      LibXR::RamFS& ramfs,
+      const char* topic_name = "stp23l_frame",
+      size_t task_stack_depth = 2048,
+      uint32_t frame_timeout_ms = 200)
       : frame_timeout_ms_(frame_timeout_ms),
         topic_(LibXR::Topic::CreateTopic<Frame>(topic_name)),
-        uart_(std::addressof(external_uart_name)),
+        uart_(std::addressof(uart)),
         cmd_file_(LibXR::RamFS::CreateCommand("stp23l", CommandFunc, this))
   {
-    external_ramfs.bin_.Add(cmd_file_);
+    ramfs.bin_.Add(cmd_file_);
 
     thread_.Create(this, ThreadFunc, "stp23l_thread", task_stack_depth,
                    LibXR::Thread::Priority::REALTIME);
