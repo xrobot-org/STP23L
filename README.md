@@ -1,55 +1,91 @@
 # STP23L
 
-## Static assembly source line
+XRobot Module for the LDROBOT STP-23L UART laser ranging sensor.
 
-This source line uses explicit C++ constructor dependencies and ordered instance
-arguments. Inspect the current primary header with `xrobot_mod_parser --path .`;
-its declarations, not old manifest/config examples, define the interface.
-Historical HardwareContainer/ApplicationManager examples below apply only to the
-older dynamic source tags. Device/protocol descriptions remain relevant.
-See the XRobot [migration guide](https://github.com/xrobot-org/XRobot/blob/dev/MIGRATION.md).
-Compilation is not hardware validation; retain version-specific board evidence.
+The `stp23l_thread` thread (`REALTIME` priority) reads the UART byte stream,
+synchronizes on the fixed 10-byte frame header
+(`AA AA AA AA 00 02 00 00 B8 00`), reads the 184-byte payload (12 points and a
+sensor timestamp) and verifies the 8-bit sum checksum. Frames with a bad
+checksum are counted and dropped; every good frame is published. The module
+does not configure the UART; the BSP must set the baud rate the sensor uses.
 
+## Published topic
 
-LDROBOT STP-23L UART laser ranging sensor module for XRobot.
+`topic_name` (default `stp23l_frame`), type `STP23L::Frame`:
 
-This module reads the STP-23L UART byte stream in a background thread, syncs on
-the fixed frame header, verifies checksum, publishes complete 12-point ranging
-frames, and exposes a RamFS shell command for status output.
+| Field | Meaning |
+| --- | --- |
+| `points[12]` | raw points: `distance_mm`, `noise`, `peak`, `confidence`, `integration`, `reference_tof` |
+| `sensor_timestamp` | timestamp field of the frame |
+| `average_distance_m` | mean `distance_mm` of all 12 points, in m (invalid points included) |
+| `min_distance_mm`, `max_distance_mm` | min / max `distance_mm` of all 12 points |
+| `valid_points` | number of points with `distance_mm > 0` and `confidence > 0` |
 
-The UART name is a constructor argument, so projects may use other hardware
-aliases if needed.
+## Shell command
 
-## Required Hardware
+The module adds the command `stp23l` to `bin` in `ramfs`.
 
-- `stp23l_uart`
-- `ramfs`
+- `stp23l` or `stp23l status`: prints the good and bad frame counters and the
+  last average distance, valid point count, min and max distance.
 
-## Constructor Arguments
+## Dependencies
 
-- `topic_name`: default `"stp23l_frame"`
-- `task_stack_depth`: default `2048`
-- `uart_name`: default `"stp23l_uart"`
-- `frame_timeout_ms`: default `200`
+No other Modules; LibXR only.
 
-## Published Topics
+## Constructor
 
-- `topic_name`: `STP23L::Frame`, including 12 raw points, sensor timestamp, average distance, min / max distance, and valid point count
+```cpp
+STP23L(LibXR::UART& uart, LibXR::RamFS& ramfs,
+       const char* topic_name = "stp23l_frame",
+       size_t task_stack_depth = 2048,
+       uint32_t frame_timeout_ms = 200);
+```
 
-## Shell Commands
+Dependencies:
 
-The module registers `bin/stp23l` in `RamFS`.
+- `uart`: the UART connected to the STP-23L, already configured by the BSP.
+- `ramfs`: RamFS that receives the `stp23l` command.
 
-- `bin/stp23l` or `bin/stp23l status`: print frame counters and latest distance statistics
+Configuration:
 
-## XRobot Configuration Example
+- `topic_name`: name of the published topic, default `stp23l_frame`.
+- `task_stack_depth`: stack size of the receive thread, default 2048.
+- `frame_timeout_ms`: timeout of each wait for UART data in the receive thread,
+  ms, default 200 (a timeout only restarts the wait).
+
+## Use
+
+```sh
+xrobot module add xrobot-org/STP23L
+xrobot setup
+xrobot instance add xrobot-org/STP23L
+```
+
+`xrobot instance add` writes an instance to `User/xrobot.yaml` with empty
+dependencies and the source defaults; set the dependencies to the names of
+objects the BSP registers with `XR_REGISTER`:
 
 ```yaml
-- id: rangefinder
-  name: STP23L
-  constructor_args:
-    topic_name: "stp23l_frame"
-    task_stack_depth: 2048
-    uart_name: "stp23l_uart"
-    frame_timeout_ms: 200
+modules:
+  - module: xrobot-org/STP23L
+    id: stp23l_0
+    args:
+      - uart: usart6
+      - ramfs: ramfs
+      - topic_name: '"stp23l_frame"'
+      - task_stack_depth: '2048'
+      - frame_timeout_ms: '200'
 ```
+
+BSP side:
+
+```cpp
+XR_REGISTER(usart6, LibXR::UART);
+XR_REGISTER(ramfs, LibXR::RamFS);
+```
+
+Run `xrobot setup` again to generate `User/xrobot_main.hpp`.
+
+`xrobot module show .` in this repository, or
+`xrobot module show Modules/xrobot-org/STP23L` in a BSP, prints the current
+constructor.
