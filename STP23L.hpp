@@ -18,31 +18,60 @@ depends: []
 #include "thread.hpp"
 #include "uart.hpp"
 
+/**
+ * @brief STP-23L 激光测距传感器驱动，解析 UART 帧并发布 12 点测距结果。
+ *        Driver for the STP-23L laser ranging sensor; parses the UART frames and
+ *        publishes the 12-point ranging result.
+ */
 class STP23L
 {
  public:
 #pragma pack(push, 1)
+  /**
+   * @brief 传感器上报的单点测距数据。
+   *        One ranging point reported by the sensor.
+   */
   struct Point
   {
-    int16_t distance_mm;
-    uint16_t noise;
-    uint32_t peak;
-    uint8_t confidence;
-    uint32_t integration;
-    int16_t reference_tof;
+    int16_t distance_mm;    ///< 距离，mm Distance, mm
+    uint16_t noise;         ///< 噪声 Noise
+    uint32_t peak;          ///< 接收峰值 Receive peak
+    uint8_t confidence;     ///< 置信度 Confidence
+    uint32_t integration;   ///< 积分次数 Integration count
+    int16_t reference_tof;  ///< 参考飞行时间 Reference time of flight
   };
 
+  /**
+   * @brief 一帧测距结果，由 Topic 发布。
+   *        One ranging frame published on the Topic.
+   */
   struct Frame
   {
-    Point points[12];
-    uint32_t sensor_timestamp;
-    float average_distance_m;
-    int16_t min_distance_mm;
-    int16_t max_distance_mm;
-    uint8_t valid_points;
+    Point points[12];           ///< 12 个原始点 The 12 raw points
+    uint32_t sensor_timestamp;  ///< 帧中的时间戳字段 Timestamp field of the frame
+    float average_distance_m;   ///< 平均距离，m Mean distance, m
+    int16_t min_distance_mm;    ///< 最小距离，mm Minimum distance, mm
+    int16_t max_distance_mm;    ///< 最大距离，mm Maximum distance, mm
+    uint8_t valid_points;       ///< 有效点数 Valid point count
   };
 #pragma pack(pop)
 
+  /**
+   * @brief 构造 STP23L：向 ramfs 的 bin 注册 `stp23l` 命令并创建接收线程。
+   *        Construct STP23L: register the `stp23l` command in bin of ramfs and create
+   *        the receive thread.
+   *
+   * @param uart 连接 STP-23L 的 UART，波特率由 BSP 配置。
+   *             UART connected to the STP-23L, with the baud rate configured by the BSP.
+   * @param ramfs 接收 `stp23l` 命令的 RamFS。
+   *              RamFS that receives the `stp23l` command.
+   * @param topic_name 测距帧 Topic 名称。
+   *                   Name of the ranging frame Topic.
+   * @param task_stack_depth 接收线程栈深。
+   *                         Stack depth of the receive thread.
+   * @param frame_timeout_ms 接收线程每次等待 UART 数据的超时，单位 ms。
+   *                         Timeout of each wait for UART data, in ms.
+   */
   STP23L(
       LibXR::UART& uart,
       LibXR::RamFS& ramfs,
