@@ -80,7 +80,7 @@ An instance written by `xrobot instance add xrobot-org/STP23L`, with `uart` and 
 ```yaml
 modules:
   - module: xrobot-org/STP23L
-    id: stp23l
+    id: stp23l_0
     args:
       - uart: usart6
       - ramfs: ramfs
