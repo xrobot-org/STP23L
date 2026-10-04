@@ -2,7 +2,7 @@
 
 // clang-format off
 /* === MODULE MANIFEST V2 ===
-module_description: LDROBOT STP-23L 激光测距传感器驱动模块 / Driver module for the LDROBOT STP-23L laser ranging sensor
+module_description: LDROBOT STP-23L 激光测距传感器驱动模块 / Driver Module for the LDROBOT STP-23L laser ranging sensor
 depends: []
 === END MANIFEST === */
 // clang-format on
