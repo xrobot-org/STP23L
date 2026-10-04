@@ -1,6 +1,6 @@
 # STP23L
 
-LDROBOT STP-23L 激光测距传感器驱动模块 / Driver module for the LDROBOT STP-23L laser ranging sensor
+LDROBOT STP-23L 激光测距传感器驱动模块 / Driver Module for the LDROBOT STP-23L laser ranging sensor
 
 ## 1. 模块作用 / Purpose
 
@@ -10,9 +10,9 @@ Upon construction, STP23L creates the thread `stp23l_thread` (`REALTIME` priorit
 
 ## 2. Shell 命令 / Shell Command
 
-- `stp23l` 或 `stp23l status`：打印校验通过与失败的帧计数，以及最近一帧的平均距离、有效点数、最小距离和最大距离。
+- `bin/stp23l` 或 `bin/stp23l status`：打印校验通过与失败的帧计数，以及最近一帧的平均距离、有效点数、最小距离和最大距离。
 
-- `stp23l` or `stp23l status`: prints the counters of good and bad frames, and the average distance, valid point count, minimum distance and maximum distance of the last frame.
+- `bin/stp23l` or `bin/stp23l status`: prints the counters of good and bad frames, and the average distance, valid point count, minimum distance and maximum distance of the last frame.
 
 ## 3. 构造接口 / Constructor
 
@@ -31,7 +31,7 @@ STP23L(LibXR::UART& uart, LibXR::RamFS& ramfs,
 配置参数：
 
 - `topic_name`：发布的 Topic 名称，默认 `stp23l_frame`。
-- `task_stack_depth`：接收线程栈深，默认 2048。
+- `task_stack_depth`：接收线程栈深，单位字节，默认 2048。
 - `frame_timeout_ms`：接收线程每次等待 UART 数据的超时，单位 ms，默认 200；超时后重新等待。
 
 Dependencies:
@@ -42,12 +42,12 @@ Dependencies:
 Configuration parameters:
 
 - `topic_name`: name of the published Topic, default `stp23l_frame`.
-- `task_stack_depth`: stack depth of the receive thread, default 2048.
+- `task_stack_depth`: stack depth of the receive thread in bytes, default 2048.
 - `frame_timeout_ms`: timeout of each wait for UART data in the receive thread, in ms, default 200; a timeout restarts the wait.
 
 ## 4. Topic
 
-| Topic（默认名称） | 方向 | 类型 | 说明 |
+| Topic | 方向 | 类型 | 说明 |
 | --- | --- | --- | --- |
 | `topic_name`（默认 `stp23l_frame`） | 发布 | `STP23L::Frame` | 一帧测距结果，字段见下表 |
 
@@ -59,7 +59,7 @@ Configuration parameters:
 | `min_distance_mm`、`max_distance_mm` | 12 个点 `distance_mm` 的最小值与最大值 |
 | `valid_points` | `distance_mm > 0` 且 `confidence > 0` 的点数 |
 
-| Topic (default name) | Direction | Type | Meaning |
+| Topic | Direction | Type | Meaning |
 | --- | --- | --- | --- |
 | `topic_name` (default `stp23l_frame`) | Publish | `STP23L::Frame` | One ranging frame, fields in the table below |
 
@@ -75,7 +75,7 @@ Configuration parameters:
 
 `xrobot instance add xrobot-org/STP23L` 写入的实例，`uart` 与 `ramfs` 填写为 BSP 通过 `XR_REGISTER`（硬件注册）注册的名称：
 
-An instance written by `xrobot instance add xrobot-org/STP23L`, with `uart` and `ramfs` set to names registered by the BSP's `XR_REGISTER` (Registration):
+An instance written by `xrobot instance add xrobot-org/STP23L`, with `uart` and `ramfs` set to names registered by the BSP with `XR_REGISTER` (Registration):
 
 ```yaml
 modules:
